@@ -1,12 +1,18 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { PrismaService } from './prisma/prisma.service';
+import { Public } from './auth/decorators/public.decorator';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
+@ApiTags('health')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private prisma: PrismaService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Public()
+  @Get('health')
+  @ApiOperation({ summary: 'Health check' })
+  async health() {
+    await this.prisma.$queryRaw`SELECT 1`; // throws if DB is unreachable
+    return { status: 'ok', db: 'connected' };
   }
 }

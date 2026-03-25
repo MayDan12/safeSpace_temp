@@ -1,0 +1,346 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  REGULAR
+  VERIFIED_PERSON
+  PROFESSIONAL
+  ADMIN
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  MANUAL_REVIEW
+}
+
+enum IdType {
+  BVN
+  NIN
+}
+
+enum PostDestination {
+  WALL
+  BOARD
+  BOTH
+}
+
+enum ReportStatus {
+  PENDING
+  DISMISSED
+  ACTIONED
+}
+
+enum ReportTargetType {
+  POST
+  COMMENT
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  RESCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum TransactionType {
+  SESSION
+  GROUP_ACCESS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum EscrowStatus {
+  HOLDING
+  RELEASED
+  REFUNDED
+}
+
+enum GroupSessionType {
+  DISCUSSION
+  AMA
+}
+
+enum GroupSessionStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+enum GroupMemberRole {
+  MEMBER
+  MODERATOR
+}
+
+// ─────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  pseudonym    String    @unique
+  role         Role      @default(REGULAR)
+  kycStatus    KycStatus @default(PENDING) @map("kyc_status")
+  isBanned     Boolean   @default(false) @map("is_banned")
+  dmOptIn      Boolean   @default(true) @map("dm_opt_in")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  professionalProfile ProfessionalProfile?
+  kycRecords          KycRecord[]
+  posts               Post[]
+  comments            Comment[]
+  reports             Report[]
+  ledGroups           Group[]          @relation("GroupLeader")
+  groupMemberships    GroupMember[]
+  hostedSessions      GroupSession[]   @relation("SessionHost")
+  bookingsAsUser      Booking[]        @relation("BookingUser")
+  sentMessages        Message[]        @relation("MessageSender")
+  receivedMessages    Message[]        @relation("MessageRecipient")
+  transactionsAsPayer Transaction[]    @relation("Payer")
+  transactionsAsPayee Transaction[]    @relation("Payee")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// KYC
+// ─────────────────────────────────────────────
+
+model KycRecord {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  provider    String    @default("INTERSWITCH")
+  idType      IdType    @map("id_type")
+  idNumber    String    @map("id_number")
+  status      KycStatus @default(PENDING)
+  rawResponse Json?     @map("raw_response")
+  verifiedAt  DateTime? @map("verified_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("kyc_records")
+}
+
+// ─────────────────────────────────────────────
+// Professional profile
+// ─────────────────────────────────────────────
+
+model ProfessionalProfile {
+  id                String  @id @default(uuid())
+  userId            String  @unique @map("user_id")
+  bio               String  @db.Text
+  specialty         String
+  availabilityNote  String? @map("availability_note")
+  isVerified        Boolean @default(false) @map("is_verified")
+  contactPreference String  @default("email") @map("contact_preference")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@map("professional_profiles")
+}
+
+// ─────────────────────────────────────────────
+// Community — Posts & Comments
+// ─────────────────────────────────────────────
+
+model Post {
+  id              String          @id @default(uuid())
+  authorId        String          @map("author_id")
+  content         String          @db.Text
+  destination     PostDestination @default(BOARD)
+  isAnonymous     Boolean         @default(false) @map("is_anonymous")
+  commentsEnabled Boolean         @default(true) @map("comments_enabled")
+  isHidden        Boolean         @default(false) @map("is_hidden")
+  supportCount    Int             @default(0) @map("support_count")
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  reports  Report[]  @relation("PostReports")
+
+  @@map("posts")
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  postId      String   @map("post_id")
+  authorId    String   @map("author_id")
+  content     String   @db.Text
+  isAnonymous Boolean  @default(false) @map("is_anonymous")
+  isHidden    Boolean  @default(false) @map("is_hidden")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  post    Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reports Report[] @relation("CommentReports")
+
+  @@map("comments")
+}
+
+// ─────────────────────────────────────────────
+// Moderation
+// ─────────────────────────────────────────────
+
+model Report {
+  id         String           @id @default(uuid())
+  reporterId String           @map("reporter_id")
+  targetType ReportTargetType @map("target_type")
+  reason     String?
+  status     ReportStatus     @default(PENDING)
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  // Nullable FK to either post or comment
+  postId    String?  @map("post_id")
+  commentId String?  @map("comment_id")
+
+  reporter User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  post     Post?    @relation("PostReports", fields: [postId], references: [id], onDelete: SetNull)
+  comment  Comment? @relation("CommentReports", fields: [commentId], references: [id], onDelete: SetNull)
+
+  @@map("reports")
+}
+
+// ─────────────────────────────────────────────
+// Groups
+// ─────────────────────────────────────────────
+
+model Group {
+  id              String   @id @default(uuid())
+  leaderId        String   @map("leader_id")
+  name            String
+  description     String?  @db.Text
+  isClosed        Boolean  @default(false) @map("is_closed")
+  requiresPayment Boolean  @default(false) @map("requires_payment")
+  entryFee        Decimal? @map("entry_fee") @db.Decimal(10, 2)
+  memberLimit     Int?     @map("member_limit")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  leader       User           @relation("GroupLeader", fields: [leaderId], references: [id])
+  members      GroupMember[]
+  sessions     GroupSession[]
+  transactions Transaction[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String          @id @default(uuid())
+  groupId  String          @map("group_id")
+  userId   String          @map("user_id")
+  role     GroupMemberRole @default(MEMBER)
+  hasPaid  Boolean         @default(false) @map("has_paid")
+  joinedAt DateTime        @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupSession {
+  id          String             @id @default(uuid())
+  groupId     String             @map("group_id")
+  hostId      String             @map("host_id")
+  title       String
+  type        GroupSessionType   @default(DISCUSSION)
+  status      GroupSessionStatus @default(SCHEDULED)
+  scheduledAt DateTime?          @map("scheduled_at")
+  endedAt     DateTime?          @map("ended_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  host  User  @relation("SessionHost", fields: [hostId], references: [id])
+
+  @@map("group_sessions")
+}
+
+// ─────────────────────────────────────────────
+// Bookings
+// ─────────────────────────────────────────────
+
+model Booking {
+  id             String        @id @default(uuid())
+  userId         String        @map("user_id")
+  professionalId String        @map("professional_id")
+  status         BookingStatus @default(PENDING)
+  proposedAt     DateTime?     @map("proposed_at")
+  confirmedAt    DateTime?     @map("confirmed_at")
+  completedAt    DateTime?     @map("completed_at")
+  notes          String?       @db.Text
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  user         User                @relation("BookingUser", fields: [userId], references: [id])
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  transaction  Transaction?
+
+  @@map("bookings")
+}
+
+// ─────────────────────────────────────────────
+// Messaging
+// ─────────────────────────────────────────────
+
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String   @map("sender_id")
+  recipientId String   @map("recipient_id")
+  content     String   @db.Text
+  isRead      Boolean  @default(false) @map("is_read")
+  sentAt      DateTime @default(now()) @map("sent_at")
+
+  sender    User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+// ─────────────────────────────────────────────
+// Payments & Escrow
+// ─────────────────────────────────────────────
+
+model Transaction {
+  id            String            @id @default(uuid())
+  payerId       String            @map("payer_id")
+  payeeId       String?           @map("payee_id")
+  bookingId     String?           @unique @map("booking_id")
+  groupId       String?           @map("group_id")
+  type          TransactionType
+  amount        Decimal           @db.Decimal(10, 2)
+  currency      String            @default("NGN")
+  status        TransactionStatus @default(PENDING)
+  escrowStatus  EscrowStatus      @default(HOLDING) @map("escrow_status")
+  providerRef   String?           @map("provider_ref")
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  payer   User                 @relation("Payer", fields: [payerId], references: [id])
+  payee   User?                @relation("Payee", fields: [payeeId], references: [id])
+  booking Booking?             @relation(fields: [bookingId], references: [id])
+  group   Group?               @relation(fields: [groupId], references: [id])
+
+  @@map("transactions")
+}
