@@ -100,11 +100,16 @@ model User {
   email        String    @unique
   passwordHash String    @map("password_hash")
   pseudonym    String    @unique
+  firstName    String?   @map("first_name")
+  lastName     String?   @map("last_name")
+  dob          DateTime? @map("date_of_birth")
   role         Role      @default(REGULAR)
   kycStatus    KycStatus @default(PENDING) @map("kyc_status")
   isBanned     Boolean   @default(false) @map("is_banned")
   dmOptIn      Boolean   @default(true) @map("dm_opt_in")
   createdAt    DateTime  @default(now()) @map("created_at")
+  refreshTokenHash String? @map("refresh_token_hash")
+
 
   // Relations
   professionalProfile ProfessionalProfile?

@@ -4,6 +4,7 @@ import { LoginDto } from './dto/login.dto';
 import { CreateUsersDto } from '../users/dto/create-users.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
+import { RefreshDto } from './dto/refresh.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,5 +28,24 @@ export class AuthController {
   @ApiResponse({ status: 409, description: 'Conflict - Email already exists' })
   register(@Body() createUsersDto: CreateUsersDto) {
     return this.authService.register(createUsersDto);
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh JWT access token' })
+  @ApiResponse({ status: 200, description: 'Return new JWT access token' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  refresh(@Body() refreshDto: RefreshDto) {
+    return this.authService.refresh(refreshDto);
+  }
+
+  // Logout
+  @Public()
+  @Post('logout')
+  @ApiOperation({ summary: 'User logout' })
+  @ApiResponse({ status: 200, description: 'User successfully logged out' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  logout(@Body() refreshDto: RefreshDto) {
+    return this.authService.logout(refreshDto.refreshToken);
   }
 }

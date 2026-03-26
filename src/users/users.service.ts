@@ -3,6 +3,7 @@ import { CreateUsersDto } from './dto/create-users.dto';
 import { UpdateUsersDto } from './dto/update-users.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { KycStatus } from 'generated/prisma';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +21,18 @@ export class UsersService {
     });
   }
 
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    return this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshTokenHash: hashedRefreshToken,
+      },
+    });
+  }
+
   findAll() {
     return this.prisma.user.findMany();
   }
@@ -32,11 +45,18 @@ export class UsersService {
     });
   }
 
-  findByEmail(email: string) {
+  async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: {
         email,
       },
+    });
+  }
+
+  async updateKycStatus(id: string, kycStatus: KycStatus) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { kycStatus },
     });
   }
 

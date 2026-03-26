@@ -1,5 +1,12 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 import { KycStatus, Role } from 'generated/prisma';
+
 export class CreateUsersDto {
   @IsNotEmpty()
   @IsEmail()
@@ -11,12 +18,28 @@ export class CreateUsersDto {
 
   @IsNotEmpty()
   role: Role;
+
   @IsNotEmpty()
   pseudonym: string;
+
+  @IsOptional()
+  @IsString()
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dob?: string;
+
   @IsNotEmpty()
   kycStatus: KycStatus;
+
   @IsNotEmpty()
   isBanned: boolean;
-  @IsNotEmpty()
+
+  @IsOptional()
   dmOptIn: boolean;
 }
