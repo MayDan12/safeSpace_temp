@@ -8,6 +8,8 @@ import { AppController } from './app.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { KycModule } from './kyc/kyc.module';
+import { PostsModule } from './posts/posts.module';
+import { GroupsModule } from './groups/groups.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { KycModule } from './kyc/kyc.module';
     PrismaModule,
     UsersModule,
     KycModule,
+    PostsModule,
+    GroupsModule,
   ],
   controllers: [AppController],
   providers: [
