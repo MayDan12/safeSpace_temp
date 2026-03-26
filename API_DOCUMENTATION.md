@@ -173,4 +173,3 @@ The API returns standard HTTP status codes:
 - `403`: Forbidden (Not the owner/Insufficient role)
 - `404`: Not Found
 - `409`: Conflict (Email already exists)
-  ss
