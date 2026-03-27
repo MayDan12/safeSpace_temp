@@ -10,6 +10,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { KycModule } from './kyc/kyc.module';
 import { PostsModule } from './posts/posts.module';
 import { GroupsModule } from './groups/groups.module';
+import { ProfessionalsModule } from './professionals/professionals.module';
+import { BookingsModule } from './bookings/bookings.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { GroupsModule } from './groups/groups.module';
     KycModule,
     PostsModule,
     GroupsModule,
+    ProfessionalsModule,
+    BookingsModule,
   ],
   controllers: [AppController],
   providers: [
