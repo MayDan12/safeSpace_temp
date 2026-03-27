@@ -5,7 +5,7 @@ import {
   IsOptional,
   IsDateString,
 } from 'class-validator';
-import { KycStatus, Role } from 'generated/prisma';
+import { KycStatus, Role } from '@prisma/client';
 
 export class CreateUsersDto {
   @IsNotEmpty()

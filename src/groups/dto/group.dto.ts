@@ -8,7 +8,7 @@ import {
   IsEnum,
   IsDateString,
 } from 'class-validator';
-import { GroupSessionType, GroupSessionStatus } from 'generated/prisma';
+import { GroupSessionType, GroupSessionStatus } from '@prisma/client';
 
 export class CreateGroupDto {
   @IsNotEmpty()

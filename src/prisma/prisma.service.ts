@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from 'generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
@@ -10,14 +10,13 @@ export class PrismaService
   constructor() {
     super({
       adapter: new PrismaPg({
-        connectionString: process.env.DATABASE_URL!,
+        connectionString: process.env.DATABASE_URL,
       }),
       log: ['query', 'info', 'warn', 'error'],
     });
   }
 
   async onModuleInit() {
-    console.log('DATABASE_URL:', process.env.DATABASE_URL);
     await this.$connect();
   }
 

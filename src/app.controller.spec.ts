@@ -1,21 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { PrismaService } from './prisma/prisma.service';
 
 describe('AppController', () => {
   let app: TestingModule;
+  let prismaService: { $queryRaw: jest.Mock };
 
   beforeAll(async () => {
+    prismaService = {
+      $queryRaw: jest.fn().mockResolvedValue(1),
+    };
+
     app = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [{ provide: PrismaService, useValue: prismaService }],
     }).compile();
   });
 
-  describe('getHello', () => {
-    it('should return "Hello World!"', () => {
-      const appController = app.get(AppController);
-      expect(appController.getHello()).toBe('Hello World!');
+  it('should return health response', async () => {
+    const appController = app.get(AppController);
+    await expect(appController.health()).resolves.toEqual({
+      status: 'ok',
+      db: 'connected',
     });
+    expect(prismaService.$queryRaw).toHaveBeenCalled();
   });
 });

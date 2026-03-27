@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostDto, UpdatePostDto, ReportPostDto } from './dto/post.dto';
 import { CreateCommentDto, ReportCommentDto } from './dto/comment.dto';
 import { PaginationDto } from './dto/pagination.dto';
-import { ReportTargetType } from 'generated/prisma';
+import { ReportTargetType } from '@prisma/client';
 
 @Injectable()
 export class PostsService {

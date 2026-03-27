@@ -5,7 +5,7 @@ import {
   IsOptional,
   IsEnum,
 } from 'class-validator';
-import { PostDestination } from 'generated/prisma';
+import { PostDestination } from '@prisma/client';
 
 export class CreatePostDto {
   @IsNotEmpty()

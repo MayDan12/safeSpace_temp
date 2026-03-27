@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   Request,
-  UseGuards,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import {
@@ -16,7 +15,12 @@ import {
   CreateGroupSessionDto,
   UpdateGroupSessionDto,
 } from './dto/group.dto';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 interface RequestWithUser extends Request {
   user: {
@@ -42,7 +46,10 @@ export class GroupsController {
   @Post()
   @ApiOperation({ summary: 'Create a group (Verified/Professional)' })
   @ApiResponse({ status: 201, description: 'Group created' })
-  create(@Request() req: RequestWithUser, @Body() createGroupDto: CreateGroupDto) {
+  create(
+    @Request() req: RequestWithUser,
+    @Body() createGroupDto: CreateGroupDto,
+  ) {
     return this.groupsService.createGroup(req.user.id, createGroupDto);
   }
 
@@ -130,6 +137,11 @@ export class GroupsController {
     @Request() req: RequestWithUser,
     @Body() updateSessionDto: UpdateGroupSessionDto,
   ) {
-    return this.groupsService.updateSession(id, sessionId, req.user.id, updateSessionDto);
+    return this.groupsService.updateSession(
+      id,
+      sessionId,
+      req.user.id,
+      updateSessionDto,
+    );
   }
 }

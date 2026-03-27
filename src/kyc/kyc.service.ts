@@ -4,19 +4,11 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { UsersService } from 'src/users/users.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { KycStatus, IdType } from 'generated/prisma';
-
-interface UserWithProfile {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  dob: Date | null;
-  kycStatus: KycStatus;
-}
+import { KycStatus, IdType } from '@prisma/client';
 
 @Injectable()
 export class KycService {
@@ -69,9 +61,10 @@ export class KycService {
   }
 
   async verifyBvn(userId: string, bvn: string) {
-    const user = (await this.usersService.findOne(
-      userId,
-    )) as UserWithProfile | null;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, firstName: true, lastName: true, dob: true },
+    });
     if (!user) throw new NotFoundException('User not found');
 
     const { firstName, lastName } = user;
@@ -151,9 +144,10 @@ export class KycService {
   }
 
   async verifyNin(userId: string, nin: string) {
-    const user = (await this.usersService.findOne(
-      userId,
-    )) as UserWithProfile | null;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, firstName: true, lastName: true, dob: true },
+    });
     if (!user) throw new NotFoundException('User not found');
 
     const { firstName, lastName } = user;

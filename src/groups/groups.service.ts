@@ -12,7 +12,7 @@ import {
   CreateGroupSessionDto,
   UpdateGroupSessionDto,
 } from './dto/group.dto';
-import { Role, GroupMemberRole, GroupSessionStatus } from 'generated/prisma';
+import { Role, GroupMemberRole } from '@prisma/client';
 
 @Injectable()
 export class GroupsService {
@@ -79,11 +79,17 @@ export class GroupsService {
     return group;
   }
 
-  async updateGroup(id: string, userId: string, updateGroupDto: UpdateGroupDto) {
+  async updateGroup(
+    id: string,
+    userId: string,
+    updateGroupDto: UpdateGroupDto,
+  ) {
     const group = await this.prisma.group.findUnique({ where: { id } });
     if (!group) throw new NotFoundException('Group not found');
     if (group.leaderId !== userId) {
-      throw new ForbiddenException('Only the group leader can update the group');
+      throw new ForbiddenException(
+        'Only the group leader can update the group',
+      );
     }
 
     return this.prisma.group.update({
@@ -96,7 +102,9 @@ export class GroupsService {
     const group = await this.prisma.group.findUnique({ where: { id } });
     if (!group) throw new NotFoundException('Group not found');
     if (group.leaderId !== userId) {
-      throw new ForbiddenException('Only the group leader can delete the group');
+      throw new ForbiddenException(
+        'Only the group leader can delete the group',
+      );
     }
 
     return this.prisma.group.delete({ where: { id } });
@@ -139,7 +147,9 @@ export class GroupsService {
     const group = await this.prisma.group.findUnique({ where: { id } });
     if (!group) throw new NotFoundException('Group not found');
     if (group.leaderId === userId) {
-      throw new BadRequestException('Leaders cannot leave their own group. Delete the group instead.');
+      throw new BadRequestException(
+        'Leaders cannot leave their own group. Delete the group instead.',
+      );
     }
 
     return this.prisma.groupMember.delete({
@@ -174,7 +184,9 @@ export class GroupsService {
   }
 
   async removeMember(groupId: string, targetUserId: string, leaderId: string) {
-    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
     if (!group) throw new NotFoundException('Group not found');
     if (group.leaderId !== leaderId) {
       throw new ForbiddenException('Only the leader can remove members');
@@ -194,8 +206,14 @@ export class GroupsService {
     });
   }
 
-  async createSession(groupId: string, userId: string, dto: CreateGroupSessionDto) {
-    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+  async createSession(
+    groupId: string,
+    userId: string,
+    dto: CreateGroupSessionDto,
+  ) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
     if (!group) throw new NotFoundException('Group not found');
     if (group.leaderId !== userId) {
       throw new ForbiddenException('Only the leader can create sessions');
@@ -234,7 +252,9 @@ export class GroupsService {
     userId: string,
     dto: UpdateGroupSessionDto,
   ) {
-    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
     if (!group) throw new NotFoundException('Group not found');
     if (group.leaderId !== userId) {
       throw new ForbiddenException('Only the leader can update sessions');

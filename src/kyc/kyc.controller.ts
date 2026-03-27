@@ -18,7 +18,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from 'generated/prisma';
+import { Role } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 interface RequestWithUser extends Request {
